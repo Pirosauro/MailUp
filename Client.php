@@ -163,7 +163,7 @@ class Client {
      * @param   string  $endpoint   a valid endpoint URL
      * @return  self
      */
-    public function setMailstatisticsEndpoint($inMailstatisticsEndpoint) {
+    public function setMailStatisticsEndpoint($endpoint) {
         if (filter_var($endpoint, FILTER_VALIDATE_URL) !== FALSE) {
             $this->mail_statistics_endpoint  =  $endpoint;
         }
@@ -294,7 +294,7 @@ class Client {
             'client_id'      => $this->getClientID(),
             'client_secret'  => $this->getClientSecret(),
             'response_type'  => 'code',
-            'redirect_uri'   => $this->getCallbackUri(),
+            'redirect_uri'   => $this->getCallbackURI(),
         ];
         $url     =  $this->getLogonEndpoint() . '?' . http_build_query($query);
 
