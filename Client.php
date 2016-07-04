@@ -258,7 +258,7 @@ class Client {
      * @return  self
      */
     public function setAccessToken($token) {
-        $this->access_token  =  $access_token;
+        $this->access_token  =  $token;
 
         return $this;
     }
@@ -468,7 +468,7 @@ class Client {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
         }
 
-        $result  =  json_decode($result);
+        $result  =  json_decode($this->response->getBody());
 
         if (json_last_error() == JSON_ERROR_NONE) {
             $this->setAccessToken($result->access_token);
@@ -502,9 +502,9 @@ class Client {
         $temp    =  NULL;
 
         $this->request   =  (new Request())
-            ->setOption(CURLOPT_URL, $url);
-            ->setOption(CURLOPT_RETURNTRANSFER, TRUE);
-            ->setOption( CURLOPT_SSL_VERIFYPEER, FALSE);
+            ->setOption(CURLOPT_URL, $url)
+            ->setOption(CURLOPT_RETURNTRANSFER, TRUE)
+            ->setOption(CURLOPT_SSL_VERIFYPEER, FALSE)
             ->setOption(CURLOPT_SSL_VERIFYHOST, FALSE);
 
         if ($verb == "POST") {
@@ -516,8 +516,8 @@ class Client {
             ];
 
             $this->request
-                ->setOption(CURLOPT_POST, TRUE);
-                ->setOption(CURLOPT_POSTFIELDS, $body);
+                ->setOption(CURLOPT_POST, TRUE)
+                ->setOption(CURLOPT_POSTFIELDS, $body)
                 ->setOption(CURLOPT_HTTPHEADER, $headers);
         }
         else if ($verb == "PUT") {
@@ -533,9 +533,9 @@ class Client {
             fseek($temp, 0);
 
             $this->request
-                ->setOption(CURLOPT_PUT, TRUE);
-                ->setOption(CURLOPT_HTTPHEADER, $headers);
-                ->setOption(CURLOPT_INFILE, $temp);
+                ->setOption(CURLOPT_PUT, TRUE)
+                ->setOption(CURLOPT_HTTPHEADER, $headers)
+                ->setOption(CURLOPT_INFILE, $temp)
                 ->setOption(CURLOPT_INFILESIZE, strlen($body));
         }
         else if ($verb == "DELETE") {
@@ -548,7 +548,7 @@ class Client {
             ];
 
             $this->request
-                ->setOption(CURLOPT_CUSTOMREQUEST, "DELETE");
+                ->setOption(CURLOPT_CUSTOMREQUEST, "DELETE")
                 ->setOption(CURLOPT_HTTPHEADER, $headers);
         }
         else {
@@ -578,12 +578,16 @@ class Client {
         }
         else if (($code == 401) && !$refresh) {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
+
+            return FALSE;
         }
         else if (($code != 200) && ($code != 302)) {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
+
+            return FALSE;
         }
 
-        return $result;
+        return $this->response;
     }
 
     /**
