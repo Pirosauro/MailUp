@@ -13,7 +13,6 @@ class Response {
 
     private $raw;
     private $status;
-    private $formatter;
 
     private $body        =  '';
     private $headers     =  [];
@@ -29,6 +28,11 @@ class Response {
         $this->raw       =  $headers . $body;
         $this->body      =  $body;
         $this->status    =  (int) $status;
+
+        //
+        if (strpos($headers, "HTTP/1.1 100 Continue") === 0) {
+            $headers     =  str_replace("HTTP/1.1 100 Continue\r\n\r\n", "", $headers);
+        }
 
         if ($headers_array = explode("\r\n", str_replace("\r\n\r\n", '', $headers))) {
             # Extract the version and status from the first header

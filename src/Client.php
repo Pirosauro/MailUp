@@ -19,14 +19,17 @@ class Client {
     private $token_endpoint              =  "https://services.mailup.com/Authorization/OAuth/Token";
     private $console_endpoint            =  "https://services.mailup.com/API/v1.1/Rest/ConsoleService.svc";
     private $mail_statistics_endpoint    =  "https://services.mailup.com/API/v1.1/Rest/MailStatisticsService.svc";
+    private $sms_endpoint                =  "https://sendsms.mailup.com/api/v2.0";
 
     private $client_id;
     private $client_secret;
     private $callback_uri;
     private $access_token;
     private $refresh_token;
+    private $basic_auth;
+    private $username;
 
-    protected $debug     =  [];
+    protected $logger;
 
     protected $request;
     protected $response;
@@ -43,14 +46,30 @@ class Client {
         $this->client_secret     =  $client_secret;
         $this->callback_uri      =  $callback_uri;
 
+        $this->logger            =  new Logger();
+
         $this->loadToken();
     }
 
     /**
-     * @return  string
+     * Set a new logger instance
+     *
+     * @param   Logger  $logger
+     * @return  self
      */
-    public function __toString() {
-        return implode("\n", $this->debug);
+    public function setLogger(Logger $logger) {
+        $this->logger    =  $logger;
+
+        return $this;
+    }
+
+    /**
+     * Get the logger instance
+     *
+     * @return  Logger
+     */
+    public function getLogger() {
+        return $this->logger;
     }
 
     /**
@@ -71,6 +90,8 @@ class Client {
     public function setLogonEndpoint($endpoint) {
         if (filter_var($endpoint, FILTER_VALIDATE_URL) !== FALSE) {
             $this->logon_endpoint   =  $endpoint;
+
+            $this->logger->setMessage('DEBUG', 'LogOn endpoint set to ' . $endpoint);
         }
         else {
             throw new Exception(sprintf('Argument 1 passed to %s must be a valid URL.', __METHOD__));
@@ -97,6 +118,8 @@ class Client {
     public function setAuthorizationEndpoint($endpoint) {
         if (filter_var($endpoint, FILTER_VALIDATE_URL) !== FALSE) {
             $this->authorization_endpoint   =  $endpoint;
+
+            $this->logger->setMessage('DEBUG', 'Authorization endpoint set to ' . $endpoint);
         }
         else {
             throw new Exception(sprintf('Argument 1 passed to %s must be a valid URL.', __METHOD__));
@@ -123,6 +146,8 @@ class Client {
     public function setTokenEndpoint($endpoint) {
         if (filter_var($endpoint, FILTER_VALIDATE_URL) !== FALSE) {
             $this->token_endpoint   =  $endpoint;
+
+            $this->logger->setMessage('DEBUG', 'Token endpoint set to ' . $endpoint);
         }
         else {
             throw new Exception(sprintf('Argument 1 passed to %s must be a valid URL.', __METHOD__));
@@ -149,6 +174,8 @@ class Client {
     public function setConsoleEndpoint($endpoint) {
         if (filter_var($endpoint, FILTER_VALIDATE_URL) !== FALSE) {
             $this->console_endpoint  =  $endpoint;
+
+            $this->logger->setMessage('DEBUG', 'Console endpoint set to ' . $endpoint);
         }
         else {
             throw new Exception(sprintf('Argument 1 passed to %s must be a valid URL.', __METHOD__));
@@ -175,6 +202,36 @@ class Client {
     public function setMailStatisticsEndpoint($endpoint) {
         if (filter_var($endpoint, FILTER_VALIDATE_URL) !== FALSE) {
             $this->mail_statistics_endpoint  =  $endpoint;
+
+            $this->logger->setMessage('DEBUG', 'Mail Statistics endpoint set to ' . $endpoint);
+        }
+        else {
+            throw new Exception(sprintf('Argument 1 passed to %s must be a valid URL.', __METHOD__));
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get the SMS endpoint
+     *
+     * @return  string
+     */
+    public function getSMSEndpoint() {
+        return $this->sms_endpoint;
+    }
+
+    /**
+     * Set the SMS endpoint
+     *
+     * @param   string  $endpoint   a valid endpoint URL
+     * @return  self
+     */
+    public function setSMSEndpoint($endpoint) {
+        if (filter_var($endpoint, FILTER_VALIDATE_URL) !== FALSE) {
+            $this->sms_endpoint  =  $endpoint;
+
+            $this->logger->setMessage('DEBUG', 'SMS endpoint set to ' . $endpoint);
         }
         else {
             throw new Exception(sprintf('Argument 1 passed to %s must be a valid URL.', __METHOD__));
@@ -201,6 +258,8 @@ class Client {
     public function setClientID($client_id) {
         $this->client_id     =  $client_id;
 
+        $this->logger->setMessage('DEBUG', 'Client ID set to ' . $client_id);
+
         return $this;
     }
 
@@ -221,6 +280,8 @@ class Client {
      */
     public function setClientSecret($client_secret) {
         $this->client_secret     =  $client_secret;
+
+        $this->logger->setMessage('DEBUG', 'Client Secret set to ' . $client_secret);
 
         return $this;
     }
@@ -243,6 +304,8 @@ class Client {
     public function setCallbackURI($callback_uri) {
         if (filter_var($callback_uri, FILTER_VALIDATE_URL) !== FALSE) {
             $this->callback_uri  =  $callback_uri;
+
+            $this->logger->setMessage('DEBUG', 'Callback URL set to ' . $callback_uri);
         }
         else {
             throw new Exception(sprintf('Argument 1 passed to %s must be a valid URL.', __METHOD__));
@@ -269,6 +332,8 @@ class Client {
     public function setAccessToken($token) {
         $this->access_token  =  $token;
 
+        $this->logger->setMessage('DEBUG', 'Access Token set to ' . $token);
+
         return $this;
     }
 
@@ -290,7 +355,33 @@ class Client {
     public function setRefreshToken($token) {
         $this->refresh_token     =  $token;
 
+        $this->logger->setMessage('DEBUG', 'Refresh Token set to ' . $token);
+
         return $this;
+    }
+
+    /**
+     * Get base64 encoded basic auth string
+     *
+     * @return  string
+     */
+    public function getBasicAuth() {
+        return $this->basic_auth;
+    }
+
+    /**
+     * Get the user name
+     *
+     * @param   bool    $strip  returns just the numeric part
+     * @return  string
+     */
+    public function getUsername( $strip = FALSE ) {
+        if ( $strip ) {
+            return preg_replace( '#[\D]+#', '', $this->username );
+        }
+        else {
+            return $this->username;
+        }
     }
 
     /**
@@ -336,6 +427,11 @@ class Client {
      * @return  self
      */
     public function doLogon($username, $password) {
+        $this->basic_auth    =  base64_encode( $username . ':' . $password );
+        $this->username      =  $username;
+
+        $this->logger->setMessage('DEBUG', 'Attempt to LogOn with user ' . $username);
+
         return $this->retreiveAccessToken($username, $password);
     }
 
@@ -346,6 +442,8 @@ class Client {
      * @return  self
      */
     public function retreiveAccessTokenWithCode($code) {
+        $this->logger->setMessage('DEBUG', 'Attempt to retrieve Access Token with code ' . $code);
+
         $url     =  $this->getTokenEndpoint() . '?' . http_build_query([
             'code'           => $code,
             'grant_type'     => 'authorization_code',
@@ -357,12 +455,12 @@ class Client {
             ->setOption(CURLOPT_SSL_VERIFYPEER, FALSE)
             ->setOption(CURLOPT_SSL_VERIFYHOST, FALSE);
 
-        $this->debug[]   =  sprintf('%s: %s', 'GET', $url);
+        $this->logger->setRequest($this->request, 'GET');
 
         $this->response  =  $this->request->execute();
         $code            =  $this->response->getStatusCode();
 
-        $this->debug[]   =  sprintf('(%s) %s', $code, $this->response->getBody());
+        $this->logger->setResponse($this->response);
 
         if (($code != 200) && ($code != 302)) {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
@@ -396,6 +494,8 @@ class Client {
      * @return  self
      */
     protected function retreiveAccessToken($username, $password) {
+        $this->logger->setMessage('DEBUG', 'Attempt to retrieve Access Token with user ' . $username);
+
         $body    =  http_build_query([
             'grant_type'     => 'password',
             'username'       => $username,
@@ -419,12 +519,12 @@ class Client {
             ->setOption(CURLOPT_HTTPHEADER, $headers)
             ->setOption(CURLOPT_POSTFIELDS, $body);
 
-        $this->debug[]   =  sprintf('%s: %s %s', 'POST', $url, $body);
+        $this->logger->setRequest($this->request, 'POST');
 
         $this->response  =  $this->request->execute();
         $code            =  $this->response->getStatusCode();
 
-        $this->debug[]   =  sprintf('(%s) %s', $code, $this->response->getBody());
+        $this->logger->setResponse($this->response);
 
         if (($code != 200) && ($code != 302)) {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
@@ -457,6 +557,8 @@ class Client {
      * @return  self
      */
     public function refreshAccessToken() {
+        $this->logger->setMessage('DEBUG', 'Attempt to refresh the token');
+
         $body    =  http_build_query([
             'client_id'      => $this->getClientID(),
             'client_secret'  => $this->getClientSecret(),
@@ -478,12 +580,12 @@ class Client {
             ->setOption(CURLOPT_POSTFIELDS, $body)
             ->setOption(CURLOPT_HTTPHEADER, $headers);
 
-        $this->debug[]   =  sprintf('%s: %s %s', 'POST', $url, $body);
+        $this->logger->setRequest($this->request, 'POST');
 
         $this->response  =  $this->request->execute();
         $code            =  $this->response->getStatusCode();
 
-        $this->debug[]   =  sprintf('(%s) %s', $code, $this->response->getBody());
+        $this->logger->setResponse($this->response);
 
         if (($code != 200) && ($code != 302)) {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
@@ -521,6 +623,7 @@ class Client {
      */
     public function callMethod($url, $verb, $body = '', $content_type = self::CONTENT_TYPE_JSON, $refresh = TRUE) {
         $temp    =  NULL;
+        $sms     =  (stripos($url, $this->sms_endpoint) === 0) ? TRUE : FALSE;
 
         $this->request   =  (new Request())
             ->setOption(CURLOPT_URL, $url)
@@ -529,12 +632,22 @@ class Client {
             ->setOption(CURLOPT_SSL_VERIFYHOST, FALSE);
 
         if ($verb == "POST") {
-            $headers     =  [
-                'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
-                'Content-length: ' . strlen($body),
-                'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
-                'Authorization: Bearer ' . $this->getAccessToken(),
-            ];
+            if ( $sms ) {
+                $headers     =  [
+                    'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Content-length: ' . strlen($body),
+                    'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Authorization: Basic ' . $this->getBasicAuth(),
+                ];
+            }
+            else {
+                $headers     =  [
+                    'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Content-length: ' . strlen($body),
+                    'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Authorization: Bearer ' . $this->getAccessToken(),
+                ];
+            }
 
             $this->request
                 ->setOption(CURLOPT_POST, TRUE)
@@ -543,12 +656,23 @@ class Client {
         }
         else if ($verb == "PUT") {
             $temp        =  tmpfile();
-            $headers     =  [
-                'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
-                'Content-length: ' . strlen($body),
-                'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
-                'Authorization: Bearer ' . $this->getAccessToken(),
-            ];
+
+            if ( $sms ) {
+                $headers     =  [
+                    'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Content-length: ' . strlen($body),
+                    'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Authorization: Basic ' . $this->getBasicAuth(),
+                ];
+            }
+            else {
+                $headers     =  [
+                    'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Content-length: ' . strlen($body),
+                    'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Authorization: Bearer ' . $this->getAccessToken(),
+                ];
+            }
 
             fwrite($temp, $body);
             fseek($temp, 0);
@@ -561,12 +685,23 @@ class Client {
         }
         else if ($verb == "DELETE") {
             $body        =  '';
-            $headers     =  [
-                'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
-                'Content-length: ' . strlen($body),
-                'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
-                'Authorization: Bearer ' . $this->getAccessToken(),
-            ];
+
+            if ( $sms ) {
+                $headers     =  [
+                    'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Content-length: ' . strlen($body),
+                    'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Authorization: Basic ' . $this->getBasicAuth(),
+                ];
+            }
+            else {
+                $headers     =  [
+                    'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Content-length: ' . strlen($body),
+                    'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Authorization: Bearer ' . $this->getAccessToken(),
+                ];
+            }
 
             $this->request
                 ->setOption(CURLOPT_CUSTOMREQUEST, "DELETE")
@@ -574,23 +709,34 @@ class Client {
         }
         else {
             $body        =  '';
-            $headers     =  [
-                'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
-                'Content-length: ' . strlen($body),
-                'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
-                'Authorization: Bearer ' . $this->getAccessToken(),
-            ];
+
+            if ( $sms ) {
+                $headers     =  [
+                    'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Content-length: ' . strlen($body),
+                    'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Authorization: Basic ' . $this->getBasicAuth(),
+                ];
+            }
+            else {
+                $headers     =  [
+                    'Content-type: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Content-length: ' . strlen($body),
+                    'Accept: ' . (($content_type == "XML") ? "application/xml" : "application/json"),
+                    'Authorization: Bearer ' . $this->getAccessToken(),
+                ];
+            }
 
             $this->request
                 ->setOption(CURLOPT_HTTPHEADER, $headers);
         }
 
-        $this->debug[]   =  sprintf('%s: %s %s', $verb, $url, $body);
+        $this->logger->setRequest($this->request, $verb);
 
         $this->response  =  $this->request->execute();
         $code            =  $this->response->getStatusCode();
 
-        $this->debug[]   =  sprintf('(%s) %s', $code, $this->response->getBody());
+        $this->logger->setResponse($this->response);
 
         if ($temp)  {
             fclose($temp);
