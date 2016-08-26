@@ -13,6 +13,7 @@ class Response {
 
     private $raw;
     private $status;
+    private $formatter;
 
     private $body        =  '';
     private $headers     =  [];

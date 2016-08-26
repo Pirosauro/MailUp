@@ -26,6 +26,8 @@ class Client {
     private $access_token;
     private $refresh_token;
 
+    protected $debug     =  [];
+
     protected $request;
     protected $response;
 
@@ -42,6 +44,13 @@ class Client {
         $this->callback_uri      =  $callback_uri;
 
         $this->loadToken();
+    }
+
+    /**
+     * @return  string
+     */
+    public function __toString() {
+        return implode("\n", $this->debug);
     }
 
     /**
@@ -348,8 +357,12 @@ class Client {
             ->setOption(CURLOPT_SSL_VERIFYPEER, FALSE)
             ->setOption(CURLOPT_SSL_VERIFYHOST, FALSE);
 
+        $this->debug[]   =  sprintf('%s: %s', 'GET', $url);
+
         $this->response  =  $this->request->execute();
         $code            =  $this->response->getStatusCode();
+
+        $this->debug[]   =  sprintf('(%s) %s', $code, $this->response->getBody());
 
         if (($code != 200) && ($code != 302)) {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
@@ -406,8 +419,12 @@ class Client {
             ->setOption(CURLOPT_HTTPHEADER, $headers)
             ->setOption(CURLOPT_POSTFIELDS, $body);
 
+        $this->debug[]   =  sprintf('%s: %s %s', 'POST', $url, $body);
+
         $this->response  =  $this->request->execute();
         $code            =  $this->response->getStatusCode();
+
+        $this->debug[]   =  sprintf('(%s) %s', $code, $this->response->getBody());
 
         if (($code != 200) && ($code != 302)) {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
@@ -461,8 +478,12 @@ class Client {
             ->setOption(CURLOPT_POSTFIELDS, $body)
             ->setOption(CURLOPT_HTTPHEADER, $headers);
 
+        $this->debug[]   =  sprintf('%s: %s %s', 'POST', $url, $body);
+
         $this->response  =  $this->request->execute();
         $code            =  $this->response->getStatusCode();
+
+        $this->debug[]   =  sprintf('(%s) %s', $code, $this->response->getBody());
 
         if (($code != 200) && ($code != 302)) {
             throw new Exception(sprintf("Authorization failed with response code %d", $code));
@@ -564,8 +585,12 @@ class Client {
                 ->setOption(CURLOPT_HTTPHEADER, $headers);
         }
 
+        $this->debug[]   =  sprintf('%s: %s %s', $verb, $url, $body);
+
         $this->response  =  $this->request->execute();
         $code            =  $this->response->getStatusCode();
+
+        $this->debug[]   =  sprintf('(%s) %s', $code, $this->response->getBody());
 
         if ($temp)  {
             fclose($temp);
@@ -594,12 +619,14 @@ class Client {
      * @deprecated
      */
     protected function loadToken() {
+        // Extend this class to re-implement this method
     }
 
     /**
      * @deprecated
      */
     protected function saveToken() {
+        // Extend this class to re-implement this method
     }
 
 }
