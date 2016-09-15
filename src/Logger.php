@@ -108,7 +108,7 @@ class Logger implements \IteratorAggregate {
      * @param   Response    $response   HTTP response
      * @return  self
      */
-    public function setResponse($response) {
+    public function setResponse(Response $response) {
         $this->setMessage('INFO', $response->getBody(), $response->getStatusCode());
 
         return $this;
