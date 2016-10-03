@@ -29,7 +29,7 @@ class Logger implements \IteratorAggregate {
         ];
         $replace     =  [
             '%1$s',
-            '%2%s',
+            '%2$10s',
             '%3$s',
             '%4$d',
         ];
@@ -65,7 +65,7 @@ class Logger implements \IteratorAggregate {
      * @return  self
      */
     public function setException(Exception $exception) {
-        $this->setMessage('ERROR', $exception->getMessage(), $exception->getCode());
+        $this->setMessage('CRITICAL', $exception->getMessage(), $exception->getCode());
 
         return $this;
     }
@@ -97,7 +97,11 @@ class Logger implements \IteratorAggregate {
             }
         }
 
-        $this->setMessage('INFO', trim($verb . ' ' . $message));
+        $this->setMessage('DEBUG', trim($verb . ' ' . $message));
+
+        if ($verb == 'POST') {
+            $this->setMessage('DEBUG', print_r($options[CURLOPT_POSTFIELDS], TRUE));
+        }
 
         return $this;
     }
@@ -108,8 +112,8 @@ class Logger implements \IteratorAggregate {
      * @param   Response    $response   HTTP response
      * @return  self
      */
-    public function setResponse(Response $response) {
-        $this->setMessage('INFO', $response->getBody(), $response->getStatusCode());
+    public function setResponse($response) {
+        $this->setMessage('DEBUG', $response->getBody(), $response->getStatusCode());
 
         return $this;
     }
