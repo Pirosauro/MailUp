@@ -11,7 +11,7 @@
             "name": "Filippo Bovo",
             "homepage": "https://alchemica.io"
         }
-    },
+    ],
     "version": "1.0.0",
     "autoload": {
         "psr-4": {
